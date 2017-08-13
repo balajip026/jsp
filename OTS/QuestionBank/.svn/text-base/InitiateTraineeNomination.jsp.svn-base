@@ -1,0 +1,151 @@
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+    pageEncoding="ISO-8859-1"%>
+<%@ page import="com.vit.bean.ots.trainee.*"%>
+<%@ page import="com.vit.action.ots.program.programMainteance"%>
+<%@ page import="com.vit.bean.ots.trainer.TrainerNominate"%>
+<%@ page import="com.vit.bean.ots.trainer.EmpMaster"%>
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<%@ taglib prefix="sj" uri="/struts-jquery-tags"%>  
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Insert title here</title>
+<%@include file="../CommonJSs.jsp" %>
+<SCRIPT type="text/javascript">
+var checkedVal; 
+var programId = $("#programId").val();
+	//alert(programId);
+var data = $("#selectDiv").html();
+	
+  $("#locationTBL").jqGrid({
+		url:'TraineeFreezeData1.action?programId='+programId,
+       	datatype: "json",
+		jsonReader: {
+			repeatitems : false,
+			//root :'traineeNominationList',
+			root :'traineeNominationFreezeList',
+			page : function(obj) {
+				return obj.page;
+			},
+			total : function(obj) {
+				return obj.total;
+			},
+			records : function(obj) {
+				return obj.records;
+			}
+		},
+		 colNames : [ 'programId', 'TrainerID', 'Status', 'UpdateTimeStamp'],
+		 colModel : [ { name : 'proMainteanceTrainee.programId',index : 'proMainteanceTrainee.programId ', align : "center" }, 
+					  { name : 'traineeId',index : 'traineeId', align : "center", key : true },
+					  //{ name : 'empmaster.fName',index : 'empmaster.fName', align : "center" },
+			          { name : 'traineeStatus',index : 'traineeStatus', align : "center" },
+				      { name : 'updateTimestamp',index : 'updateTimestamp', align : "center"}],  
+        rowNum : 10,
+		//rowList : [ 10, 20, 30 ],
+		pager : '#locationNavTBL',
+		loadatonce : true,
+		viewrecords : true,
+		//height : 93,
+		height : 180,
+		multiselect: true,
+		sortorder : "desc",
+		sortname : "proMainteanceTrainee.programId",
+		onSelectRow : function(traineeId){
+			checkedVal = traineeId;
+			//alert(checkedVal);
+	   }
+
+  });
+  
+
+	 $("#locationTBL").jqGrid('navGrid', '#locationNavTBL', {
+				add : false,
+				edit : false,
+				del : true,
+				search : false,
+				view : false,
+				refresh:false
+			}); 
+  
+    // Add Button Function 
+	$("#locAdd").click(function(){   
+
+	      //alert($('#nominatedTrainees').val());
+	      var postQueList = "programId="+programId+"&freezeList="+$('#nominatedTrainees').val();
+	      //alert(postQueList);
+	      $.post('TraineeFreezeAction.action',postQueList, function(data) {
+	    	 $("#locationTBL").trigger("reloadGrid"); 
+	     });
+	});
+			 
+	
+  // Location Select Function :  
+	$(function() {
+		$.post("locationDetails",null,function(data){
+	
+		        var locationSelect = $('#location').empty();
+		        locationSelect.append( '<option value=>Location</option>' ); 
+		        $.each(data.locationDetails, function(locObject) {
+		        	locationSelect.append( '<option value="'
+		                                 + data.locationDetails[locObject]
+		                                 + '">'
+		                                 + data.locationDetails[locObject]
+		                                 + '</option>' ); 
+			       });
+			  });
+	     }); //End 
+  	
+	$('#location').change(function(){
+		var parameter = "location="+$('#location').val()+"&programId="+$("#hidProgramId").val();
+		$.post("traineeidbylocation",parameter,function(data){
+	        var nominatedTraineesSelect = $('#nominatedTrainees').empty();
+            // locationlist Method on change values 
+	        $.each(data.locationlist, function(locObject) {
+	        	nominatedTraineesSelect.append( '<option value="'
+	                                 + data.locationlist[locObject]
+	                                 + '">'
+	                                 + data.locationlist[locObject]
+	                                 + '</option>' ); 
+		       });
+		   });
+	   });
+
+</SCRIPT>
+<style type="text/css">
+@import url("${pageContext.request.contextPath}/stylesheet/Jquery/wizard/demo_style.css");
+@import url("${pageContext.request.contextPath}/stylesheet/Jquery/wizard/smart_wizard.css");
+</style>
+</head>
+
+<body>
+<s:form name="TraineeFreeze" id="TraineeFreeze" theme="simple">
+<div id="locationDetails" >	
+<div id="locationSets">
+            <table>
+            	    <tr>
+            	        <td><s:label value="Location:" labelposition="left" ></s:label></td>
+            			<td><select id="location" name="location"> <option value="">Location</option></select></td>
+             	 	    <s:hidden id="hidProgramId" value="%{programId}"></s:hidden>
+             	 		<td><s:label value="Nominated Trainees:" labelposition="left" ></s:label></td> 
+             	 		<td><select id="nominatedTrainees" name="nominatedTrainees" disabled='disabled'  multiple='multiple' size="10" >
+             	 		<option value="TRAI">Please Select Nominated Trainees</option>
+             	 		</select></td>
+						<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+             	 		<td><input type="button" id="locAdd" value="Add" class="fm-button ui-state-default ui-corner-all fm-button-icon-left"></td>
+             	 	</tr>
+             	 
+            		<tr><td>&nbsp;</td></tr>
+            	</table>
+            	<br>
+            </div>
+            <div id="locationNavTBL"></div>
+</div>
+
+</s:form>
+<table id="locationTBL"></table>
+<br>
+<s:hidden id="programId"  name="programId" key="programId" ></s:hidden>
+</body>
+
+</html>
